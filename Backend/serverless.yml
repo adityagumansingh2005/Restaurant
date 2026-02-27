@@ -1,0 +1,320 @@
+service: restaurant-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${opt:stage, 'dev'}
+    USERS_TABLE: ${self:service}-users-${self:provider.stage}
+    RESERVATIONS_TABLE: ${self:service}-reservations-${self:provider.stage}
+    OTP_TABLE: restaurant-otp-codes-${self:provider.stage}
+    SES_SENDER_EMAIL: noreply@restaurantdeliciousbites.com
+    # ✅ Cognito Configuration (using existing user pool)
+    COGNITO_USER_POOL_ID: us-east-1_u2c4NVWFd
+    COGNITO_CLIENT_ID: 4um4b8gu22hak09cg67d457i32
+    COGNITO_CLIENT_SECRET: f9hnoalrn0frjqpm8cgd5d02kg3p9vplanr9nle0umk9kt1k7to
+    COGNITO_REGION: us-east-1
+  httpApi:
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+    authorizers:
+      cognitoAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_u2c4NVWFd
+        audience:
+          - 4um4b8gu22hak09cg67d457i32
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: 
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.RESERVATIONS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.RESERVATIONS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.OTP_TABLE}"
+        # ✅ SES Permissions (for OTP emails)
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: "*"
+        # ✅ Cognito Permissions
+        - Effect: Allow
+          Action:
+            - cognito-idp:SignUp
+            - cognito-idp:AdminInitiateAuth
+            - cognito-idp:AdminGetUser
+            - cognito-idp:AdminConfirmSignUp
+            - cognito-idp:AdminSetUserPassword
+            - cognito-idp:AdminDeleteUser
+            - cognito-idp:InitiateAuth
+            - cognito-idp:RespondToAuthChallenge
+            - cognito-idp:ChangePassword
+            - cognito-idp:GetUser
+          Resource: "arn:aws:cognito-idp:${self:provider.region}:*:userpool/*"
+
+functions:
+  # Authentication endpoints
+  signup:
+    handler: src/handlers/auth.signup
+    events:
+      - httpApi:
+          path: /auth/signup
+          method: post
+
+  login:
+    handler: src/handlers/auth.login
+    events:
+      - httpApi:
+          path: /auth/login
+          method: post
+
+  # ✅ Cognito token refresh endpoint
+  refresh:
+    handler: src/handlers/auth.refresh
+    events:
+      - httpApi:
+          path: /auth/refresh
+          method: post
+
+  # ✅ Get authenticated user info
+  getUser:
+    handler: src/handlers/auth.getUser
+    events:
+      - httpApi:
+          path: /auth/user
+          method: get
+          authorizer: cognitoAuthorizer
+
+  # ✅ Logout endpoint
+  logout:
+    handler: src/handlers/auth.logout
+    events:
+      - httpApi:
+          path: /auth/logout
+          method: post
+
+  # ✅ OTP endpoints
+  sendOTP:
+    handler: src/handlers/auth.sendOTP
+    events:
+      - httpApi:
+          path: /auth/send-otp
+          method: post
+
+  verifyOTP:
+    handler: src/handlers/auth.verifyOTP
+    events:
+      - httpApi:
+          path: /auth/verify-otp
+          method: post
+
+  resendOTP:
+    handler: src/handlers/auth.resendOTP
+    events:
+      - httpApi:
+          path: /auth/resend-otp
+          method: post
+
+  setPassword:
+    handler: src/handlers/auth.setPassword
+    events:
+      - httpApi:
+          path: /auth/set-password
+          method: post
+
+  # Menu endpoints
+  getMenu:
+    handler: src/handlers/menu.getMenu
+    events:
+      - httpApi:
+          path: /menu
+          method: get
+
+  # Orders endpoints
+  createOrder:
+    handler: src/handlers/orders.createOrder
+    events:
+      - httpApi:
+          path: /orders
+          method: post
+          authorizer: cognitoAuthorizer
+
+  getOrders:
+    handler: src/handlers/orders.getOrders
+    events:
+      - httpApi:
+          path: /orders
+          method: get
+          authorizer: cognitoAuthorizer
+
+  getOrder:
+    handler: src/handlers/orders.getOrder
+    events:
+      - httpApi:
+          path: /orders/{id}
+          method: get
+          authorizer: cognitoAuthorizer
+
+  updateOrder:
+    handler: src/handlers/orders.updateOrder
+    events:
+      - httpApi:
+          path: /orders/{id}
+          method: put
+          authorizer: cognitoAuthorizer
+
+  deleteOrder:
+    handler: src/handlers/orders.deleteOrder
+    events:
+      - httpApi:
+          path: /orders/{id}
+          method: delete
+          authorizer: cognitoAuthorizer
+
+  # Health check
+  health:
+    handler: src/handlers/health.check
+    events:
+      - httpApi:
+          path: /health
+          method: get
+
+  # Reservations endpoints
+  createReservation:
+    handler: src/handlers/reservations.createReservation
+    events:
+      - httpApi:
+          path: /reservations
+          method: post
+          authorizer: cognitoAuthorizer
+
+  getReservations:
+    handler: src/handlers/reservations.getReservations
+    events:
+      - httpApi:
+          path: /reservations
+          method: get
+          authorizer: cognitoAuthorizer
+
+  getReservation:
+    handler: src/handlers/reservations.getReservation
+    events:
+      - httpApi:
+          path: /reservations/{id}
+          method: get
+          authorizer: cognitoAuthorizer
+
+  updateReservation:
+    handler: src/handlers/reservations.updateReservation
+    events:
+      - httpApi:
+          path: /reservations/{id}
+          method: put
+          authorizer: cognitoAuthorizer
+
+  deleteReservation:
+    handler: src/handlers/reservations.deleteReservation
+    events:
+      - httpApi:
+          path: /reservations/{id}
+          method: delete
+          authorizer: cognitoAuthorizer
+
+plugins:
+  - serverless-offline
+
+custom:
+  offline:
+    httpPort: 3000
+    websocketPort: 3001
+
+resources:
+  Resources:
+    # ✅ DynamoDB Tables (Cognito User Pool is already created separately)
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.USERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    ReservationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.RESERVATIONS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: reservationId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: reservationId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: userIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    OTPTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.OTP_TABLE}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
+
+  # ✅ Outputs (using existing Cognito User Pool)
+  Outputs:
+    CognitoUserPoolId:
+      Value: ${self:provider.environment.COGNITO_USER_POOL_ID}
+      Export:
+        Name: ${self:service}-CognitoUserPoolId-${self:provider.stage}
+    
+    CognitoClientId:
+      Value: ${self:provider.environment.COGNITO_CLIENT_ID}
+      Export:
+        Name: ${self:service}-CognitoClientId-${self:provider.stage}

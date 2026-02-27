@@ -1,0 +1,10 @@
+{
+  "name": "restaurant-website-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix Backend run dev",
+    "start-backend": "npm --prefix Backend start",
+    "deploy-backend": "npm --prefix Backend run deploy"
+  }
+}
