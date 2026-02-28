@@ -102,21 +102,27 @@ const updateReservation = async (reservationId, updateData) => {
   try {
     const timestamp = new Date().toISOString();
 
-    const updateExpression = Object.keys(updateData)
-      .map((k) => `${k} = :${k}`)
-      .join(', ');
-
+    // Use ExpressionAttributeNames to handle DynamoDB reserved words (e.g. "name", "status")
+    const expressionAttributeNames = {};
     const expressionAttributeValues = {};
-    for (const [k, v] of Object.entries(updateData)) {
-      expressionAttributeValues[`:${k}`] = v;
-    }
+
+    const setClauses = Object.keys(updateData).map((k) => {
+      expressionAttributeNames[`#${k}`] = k;
+      expressionAttributeValues[`:${k}`] = updateData[k];
+      return `#${k} = :${k}`;
+    });
+
+    // Add updatedAt
+    expressionAttributeNames['#updatedAt'] = 'updatedAt';
     expressionAttributeValues[':updatedAt'] = timestamp;
+    setClauses.push('#updatedAt = :updatedAt');
 
     const result = await dynamodb
       .update({
         TableName: RESERVATIONS_TABLE,
         Key: { reservationId },
-        UpdateExpression: `${updateExpression}, updatedAt = :updatedAt`,
+        UpdateExpression: `SET ${setClauses.join(', ')}`,
+        ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: expressionAttributeValues,
         ReturnValues: 'ALL_NEW',
       })
