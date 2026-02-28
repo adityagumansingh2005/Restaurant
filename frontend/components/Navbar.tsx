@@ -96,11 +96,16 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth: () => void }) {
           </li>
         </ul>
 
-        <div className="menu-icon" onClick={() => setMobileMenuOpen(prev => !prev)}>
+        <button
+          className="menu-icon"
+          onClick={() => setMobileMenuOpen(prev => !prev)}
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
+        >
           <span></span>
           <span></span>
           <span></span>
-        </div>
+        </button>
       </nav>
     </header>
   );

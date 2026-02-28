@@ -278,6 +278,7 @@ module.exports.refresh = async (event) => {
     const params = {
       AuthFlow: 'REFRESH_TOKEN_AUTH',
       ClientId: clientId,
+      UserPoolId: userPoolId,
       AuthParameters: {
         REFRESH_TOKEN: refreshToken,
       },

@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+import Image from 'next/image';
 
 const menuItems = [
   {
@@ -35,7 +35,14 @@ export default function Menu() {
       <div className="menu-grid">
         {menuItems.map((item) => (
           <div key={item.name} className="menu-item">
-            <img src={item.image} alt={item.name} />
+            <Image
+              src={item.image}
+              alt={item.name}
+              width={400}
+              height={300}
+              style={{ width: '100%', height: 'auto', borderRadius: '10px' }}
+              loading="lazy"
+            />
             <h3>{item.name}</h3>
             <p>{item.description}</p>
             <span>{item.price}</span>

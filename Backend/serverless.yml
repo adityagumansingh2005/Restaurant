@@ -254,8 +254,8 @@ plugins:
 
 custom:
   offline:
-    httpPort: 3000
-    websocketPort: 3001
+    httpPort: 3001
+    websocketPort: 3002
 
 resources:
   Resources:

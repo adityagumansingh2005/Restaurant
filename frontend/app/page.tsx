@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Navbar from '@/components/Navbar';
 import AuthModal from '@/components/AuthModal';
 import Hero from '@/components/Hero';
@@ -17,7 +18,7 @@ export default function Home() {
   const closeAuth = () => setAuthModalOpen(false);
 
   return (
-    <>
+    <ErrorBoundary>
       <Navbar onOpenAuth={openAuth} />
       <AuthModal isOpen={authModalOpen} onClose={closeAuth} />
       <Hero />
@@ -26,7 +27,7 @@ export default function Home() {
       <Reviews />
       <Reservation onOpenAuth={openAuth} />
       <Footer />
-    </>
+    </ErrorBoundary>
   );
 }
 

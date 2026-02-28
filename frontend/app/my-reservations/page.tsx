@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import AuthModal from '@/components/AuthModal';
 import Footer from '@/components/Footer';
@@ -30,6 +30,12 @@ export default function MyReservationsPage() {
   const openAuth = () => setAuthModalOpen(true);
   const closeAuth = () => setAuthModalOpen(false);
 
+  // Use refs to avoid re-triggering useEffect when these functions change
+  const authenticatedFetchRef = useRef(authenticatedFetch);
+  const showNotificationRef = useRef(showNotification);
+  useEffect(() => { authenticatedFetchRef.current = authenticatedFetch; }, [authenticatedFetch]);
+  useEffect(() => { showNotificationRef.current = showNotification; }, [showNotification]);
+
   useEffect(() => {
     if (!isLoggedIn) {
       router.push('/');
@@ -38,7 +44,7 @@ export default function MyReservationsPage() {
 
     const fetchReservations = async () => {
       try {
-        const res = await authenticatedFetch('/reservations');
+        const res = await authenticatedFetchRef.current('/reservations');
         const data = await res.json();
         
         if (data.success) {
@@ -48,17 +54,17 @@ export default function MyReservationsPage() {
           );
           setReservations(sorted);
         } else {
-          showNotification(data.error || 'Failed to fetch reservations', 'error');
+          showNotificationRef.current(data.error || 'Failed to fetch reservations', 'error');
         }
-      } catch (err) {
-        showNotification('Error loading reservations', 'error');
+      } catch {
+        showNotificationRef.current('Error loading reservations', 'error');
       } finally {
         setLoading(false);
       }
     };
 
     fetchReservations();
-  }, [isLoggedIn, authenticatedFetch, router, showNotification]);
+  }, [isLoggedIn, router]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to cancel this reservation?')) return;
@@ -73,7 +79,7 @@ export default function MyReservationsPage() {
       } else {
         showNotification(data.error || 'Failed to cancel reservation', 'error');
       }
-    } catch (err) {
+    } catch {
       showNotification('Error cancelling reservation', 'error');
     }
   };
@@ -120,7 +126,7 @@ export default function MyReservationsPage() {
       } else {
         showNotification(data.error || 'Failed to update reservation', 'error');
       }
-    } catch (err) {
+    } catch {
       showNotification('Error updating reservation', 'error');
     }
   };
