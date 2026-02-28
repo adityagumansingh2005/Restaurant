@@ -1,5 +1,13 @@
 service: restaurant-api
 
+package:
+  patterns:
+    - '!./**'
+    - 'src/**'
+    - 'node_modules/**'
+    - 'index.js'
+    - 'package.json'
+
 provider:
   name: aws
   runtime: nodejs18.x

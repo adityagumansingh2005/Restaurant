@@ -24,7 +24,7 @@ const menuItems = [
     name: 'Paneer Tikka',
     description: 'Perfectly roasted paneer with spices.',
     price: '₹200',
-  },
+  }
 ];
 
 export default function Menu() {

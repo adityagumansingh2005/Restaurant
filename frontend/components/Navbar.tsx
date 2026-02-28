@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 export default function Navbar({ onOpenAuth }: { onOpenAuth: () => void }) {
   const { isLoggedIn, currentUser, logout } = useAuth();
@@ -43,11 +44,11 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth: () => void }) {
         </div>
 
         <ul className={`nav-links${mobileMenuOpen ? ' mobile-open' : ''}`} id="navLinks">
-          <li><a href="#home">Home</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#menu">Menu</a></li>
-          <li><a href="#reviews">Reviews</a></li>
-          <li><a href="#reservation">Reservation</a></li>
+          <li><Link href="/#home">Home</Link></li>
+          <li><Link href="/#about">About</Link></li>
+          <li><Link href="/#menu">Menu</Link></li>
+          <li><Link href="/#reviews">Reviews</Link></li>
+          <li><Link href="/#reservation">Reservation</Link></li>
 
           <li className="auth-dropdown">
             <button
@@ -62,16 +63,23 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth: () => void }) {
             {dropdownOpen && (
               <div ref={dropdownRef} className="auth-dropdown-menu">
                 {isLoggedIn ? (
-                  <div className="auth-dropdown-item logout-item">
-                    <span className="dropdown-user-name">Hi, {displayName}</span>
-                    <a
-                      href="#"
-                      className="logout-link"
-                      onClick={(e) => { e.preventDefault(); handleLogout(); }}
-                    >
-                      Logout
-                    </a>
-                  </div>
+                  <>
+                    <div className="auth-dropdown-item">
+                      <span className="dropdown-user-name">Hi, {displayName}</span>
+                    </div>
+                    <div className="auth-dropdown-item">
+                      <Link href="/my-reservations" onClick={() => setDropdownOpen(false)}>My Reservations</Link>
+                    </div>
+                    <div className="auth-dropdown-item logout-item">
+                      <a
+                        href="#"
+                        className="logout-link"
+                        onClick={(e) => { e.preventDefault(); handleLogout(); }}
+                      >
+                        Logout
+                      </a>
+                    </div>
+                  </>
                 ) : (
                   <div className="auth-dropdown-item">
                     <a
