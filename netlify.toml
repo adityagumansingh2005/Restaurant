@@ -1,10 +1,10 @@
 [build]
+  base = "frontend"
   command = "npm run build"
-  publish = ".next"
+  publish = "frontend/.next"
 
 [build.environment]
   NEXT_PUBLIC_API_URL = "https://kmxjx8sunf.execute-api.us-east-1.amazonaws.com"
-  NODE_VERSION = "18"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
