@@ -9,7 +9,12 @@
     "dev": "nodemon index.js",
     "offline": "serverless offline start",
     "deploy": "serverless deploy",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --verbose --forceExit",
+    "test:health": "jest --verbose __tests__/health.test.js",
+    "test:menu": "jest --verbose __tests__/menu.test.js",
+    "test:orders": "jest --verbose __tests__/orders.test.js",
+    "test:reservations": "jest --verbose __tests__/reservations.test.js",
+    "test:auth": "jest --verbose __tests__/auth.test.js",
     "lint": "eslint src/**/*.js"
   },
   "keywords": [
@@ -34,6 +39,7 @@
   "devDependencies": {
     "axios": "^1.13.4",
     "eslint": "^8.53.0",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.11",
     "prettier": "^3.1.0",
     "serverless": "^4.33.0",
