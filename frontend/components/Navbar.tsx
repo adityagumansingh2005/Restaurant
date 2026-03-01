@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 
 export default function Navbar({ onOpenAuth }: { onOpenAuth: () => void }) {
   const { isLoggedIn, currentUser, logout } = useAuth();
+  const { totalItems, toggleCart } = useCart();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -49,6 +51,14 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth: () => void }) {
           <li><Link href="/#menu">Menu</Link></li>
           <li><Link href="/#reviews">Reviews</Link></li>
           <li><Link href="/#reservation">Reservation</Link></li>
+
+          {/* Cart icon */}
+          <li>
+            <button className="nav-cart-btn" onClick={toggleCart} aria-label="Open cart">
+              🛒
+              {totalItems > 0 && <span className="nav-cart-badge">{totalItems}</span>}
+            </button>
+          </li>
 
           <li className="auth-dropdown">
             <button

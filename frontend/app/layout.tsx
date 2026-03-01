@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -24,7 +25,9 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable}>
       <body style={{ fontFamily: "var(--font-poppins), sans-serif" }}>
         <AuthProvider>
-          {children}
+          <CartProvider>
+            {children}
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

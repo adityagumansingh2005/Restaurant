@@ -109,9 +109,13 @@ app.post('/auth/set-password', lambdaHandler(authHandler.setPassword, false));
 app.get('/health', lambdaHandler(healthHandler.check, false));
 
 // ============================================================
-// Menu Routes (No Auth Required)
+// Menu Routes (GET is public, CUD requires Auth)
 // ============================================================
 app.get('/menu', lambdaHandler(menuHandler.getMenu, false));
+app.get('/menu/:id', lambdaHandler(menuHandler.getMenuItem, false));
+app.post('/menu', lambdaHandler(menuHandler.createMenuItem, true));
+app.put('/menu/:id', lambdaHandler(menuHandler.updateMenuItem, true));
+app.delete('/menu/:id', lambdaHandler(menuHandler.deleteMenuItem, true));
 
 // ============================================================
 // Orders Routes (Auth Required for POST, PUT, DELETE)

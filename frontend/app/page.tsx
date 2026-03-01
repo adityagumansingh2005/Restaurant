@@ -10,6 +10,7 @@ import Menu from '@/components/Menu';
 import Reviews from '@/components/Reviews';
 import Reservation from '@/components/Reservation';
 import Footer from '@/components/Footer';
+import Cart from '@/components/Cart';
 
 export default function Home() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -21,6 +22,7 @@ export default function Home() {
     <ErrorBoundary>
       <Navbar onOpenAuth={openAuth} />
       <AuthModal isOpen={authModalOpen} onClose={closeAuth} />
+      <Cart onOpenAuth={openAuth} />
       <Hero />
       <About />
       <Menu />

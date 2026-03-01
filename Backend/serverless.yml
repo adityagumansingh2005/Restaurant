@@ -16,8 +16,7 @@ provider:
   environment:
     NODE_ENV: ${opt:stage, 'dev'}
     USERS_TABLE: ${self:service}-users-${self:provider.stage}
-    RESERVATIONS_TABLE: ${self:service}-reservations-${self:provider.stage}
-    # ✅ Cognito Configuration (used by JWT authorizer, not by Lambda auth handlers)
+    RESERVATIONS_TABLE: ${self:service}-reservations-${self:provider.stage}    MENU_TABLE: ${self:service}-menu-${self:provider.stage}    # ✅ Cognito Configuration (used by JWT authorizer, not by Lambda auth handlers)
     COGNITO_USER_POOL_ID: us-east-1_u2c4NVWFd
     COGNITO_CLIENT_ID: 4um4b8gu22hak09cg67d457i32
     COGNITO_REGION: us-east-1
@@ -57,6 +56,8 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}/index/*"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.RESERVATIONS_TABLE}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.RESERVATIONS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MENU_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MENU_TABLE}/index/*"
 
 functions:
   # ✅ Auth is now handled directly by AWS Amplify on the frontend.
@@ -71,6 +72,37 @@ functions:
       - httpApi:
           path: /menu
           method: get
+
+  getMenuItem:
+    handler: src/handlers/menu.getMenuItem
+    events:
+      - httpApi:
+          path: /menu/{id}
+          method: get
+
+  createMenuItem:
+    handler: src/handlers/menu.createMenuItem
+    events:
+      - httpApi:
+          path: /menu
+          method: post
+          authorizer: cognitoAuthorizer
+
+  updateMenuItem:
+    handler: src/handlers/menu.updateMenuItem
+    events:
+      - httpApi:
+          path: /menu/{id}
+          method: put
+          authorizer: cognitoAuthorizer
+
+  deleteMenuItem:
+    handler: src/handlers/menu.deleteMenuItem
+    events:
+      - httpApi:
+          path: /menu/{id}
+          method: delete
+          authorizer: cognitoAuthorizer
 
   # Orders endpoints
   createOrder:
@@ -212,6 +244,31 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
     # OTPTable removed — Cognito handles verification codes natively via Amplify.
+    MenuTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.MENU_TABLE}
+        AttributeDefinitions:
+          - AttributeName: itemId
+            AttributeType: S
+          - AttributeName: category
+            AttributeType: S
+        KeySchema:
+          - AttributeName: itemId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: categoryIndex
+            KeySchema:
+              - AttributeName: category
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
 
   # ✅ Outputs (using existing Cognito User Pool)
   Outputs:
