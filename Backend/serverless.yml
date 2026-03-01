@@ -19,6 +19,7 @@ provider:
     RESERVATIONS_TABLE: ${self:service}-reservations-${self:provider.stage}
     MENU_TABLE: ${self:service}-menu-${self:provider.stage}
     ORDERS_TABLE: ${self:service}-orders-${self:provider.stage}
+    REVIEWS_TABLE: ${self:service}-reviews-${self:provider.stage}
     # ✅ Cognito Configuration (used by JWT authorizer, not by Lambda auth handlers)
     COGNITO_USER_POOL_ID: us-east-1_u2c4NVWFd
     COGNITO_CLIENT_ID: 4um4b8gu22hak09cg67d457i32
@@ -63,6 +64,8 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MENU_TABLE}/index/*"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ORDERS_TABLE}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ORDERS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.REVIEWS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.REVIEWS_TABLE}/index/*"
 
 functions:
   # ✅ Auth is now handled directly by AWS Amplify on the frontend.
@@ -149,6 +152,21 @@ functions:
           path: /orders/{id}
           method: delete
           authorizer: cognitoAuthorizer
+
+  # Reviews endpoints
+  getReviews:
+    handler: src/handlers/reviews.getReviews
+    events:
+      - httpApi:
+          path: /reviews
+          method: get
+
+  createReview:
+    handler: src/handlers/reviews.createReview
+    events:
+      - httpApi:
+          path: /reviews
+          method: post
 
   # Health check
   health:
@@ -291,6 +309,32 @@ resources:
           - IndexName: userIdIndex
             KeySchema:
               - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    ReviewsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.REVIEWS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: reviewId
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+        KeySchema:
+          - AttributeName: reviewId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: statusIndex
+            KeySchema:
+              - AttributeName: status
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
