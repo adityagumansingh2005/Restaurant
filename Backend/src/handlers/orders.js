@@ -1,298 +1,198 @@
 'use strict';
 
-const { v4: uuidv4 } = require('uuid');
+const orders = require('../utils/orders');
 
-// In-memory storage for demo (replace with DynamoDB in production)
-const orders = {};
+const HEADERS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+};
 
+/**
+ * Extract userId from Cognito JWT (supports both Lambda httpApi JWT & local app.js)
+ */
+function extractUser(event) {
+  const jwt = event.requestContext?.authorizer?.jwt;
+  const claims = event.requestContext?.authorizer?.claims;
+
+  const userId =
+    jwt?.claims?.sub ||
+    claims?.sub ||
+    event.requestContext?.authorizer?.userId ||
+    event.requestContext?.authorizer?.principalId ||
+    null;
+
+  const userEmail =
+    jwt?.claims?.email ||
+    claims?.email ||
+    '';
+
+  return { userId, userEmail };
+}
+
+/* ------------------------------------------------------------------ */
+/*  CREATE                                                             */
+/* ------------------------------------------------------------------ */
 module.exports.createOrder = async (event) => {
   console.log('POST /orders - Creating new order');
 
   try {
-    const body = JSON.parse(event.body);
-    
-    // ✅ Extract userId from Cognito authorizer context
-    const authorizer = event.requestContext?.authorizer;
-    const userId = authorizer?.claims?.sub || authorizer?.principalId || event.requestContext?.authorizer?.userId;
-    const userEmail = authorizer?.claims?.email || '';
+    const { userId, userEmail } = extractUser(event);
 
     if (!userId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({
-          success: false,
-          error: 'Authentication required',
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
+      return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Authentication required' }), headers: HEADERS };
     }
 
-    const orderId = uuidv4();
-    
-    const order = {
-      id: orderId,
+    const body = JSON.parse(event.body || '{}');
+
+    if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Order must contain at least one item' }), headers: HEADERS };
+    }
+
+    // Calculate total server-side for integrity
+    const totalPrice = body.items.reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0);
+
+    const order = await orders.createOrder({
       userId,
       userEmail,
       items: body.items,
-      totalPrice: body.totalPrice,
-      customerName: body.customerName,
-      customerEmail: body.customerEmail,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
-
-    orders[orderId] = order;
+      totalPrice: parseFloat(totalPrice.toFixed(2)),
+      customerName: body.customerName || '',
+      customerEmail: body.customerEmail || userEmail,
+    });
 
     return {
       statusCode: 201,
-      body: JSON.stringify({
-        success: true,
-        data: order
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      body: JSON.stringify({ success: true, data: order }),
+      headers: HEADERS,
     };
   } catch (error) {
     console.error('Error creating order:', error);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        success: false,
-        error: 'Failed to create order'
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: error.message }), headers: HEADERS };
   }
 };
 
+/* ------------------------------------------------------------------ */
+/*  GET ALL (user's orders)                                            */
+/* ------------------------------------------------------------------ */
 module.exports.getOrders = async (event) => {
-  console.log('GET /orders - Fetching all orders');
+  console.log('GET /orders - Fetching user orders');
 
   try {
-    const ordersList = Object.values(orders);
+    const { userId } = extractUser(event);
+
+    if (!userId) {
+      return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Authentication required' }), headers: HEADERS };
+    }
+
+    const items = await orders.getOrdersByUser(userId);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        data: ordersList,
-        count: ordersList.length
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      body: JSON.stringify({ success: true, data: items, count: items.length }),
+      headers: HEADERS,
     };
   } catch (error) {
     console.error('Error fetching orders:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: 'Failed to fetch orders'
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: error.message }), headers: HEADERS };
   }
 };
 
+/* ------------------------------------------------------------------ */
+/*  GET ONE                                                            */
+/* ------------------------------------------------------------------ */
 module.exports.getOrder = async (event) => {
-  console.log('GET /orders/{id} - Fetching order:', event.pathParameters.id);
+  console.log('GET /orders/:id');
 
   try {
-    const orderId = event.pathParameters.id;
-    const order = orders[orderId];
+    const { id } = event.pathParameters || {};
+    const item = await orders.getOrderById(id);
 
-    if (!order) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          success: false,
-          error: 'Order not found'
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
+    if (!item) {
+      return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Order not found' }), headers: HEADERS };
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        data: order
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      body: JSON.stringify({ success: true, data: item }),
+      headers: HEADERS,
     };
   } catch (error) {
     console.error('Error fetching order:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: 'Failed to fetch order'
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: error.message }), headers: HEADERS };
   }
 };
 
+/* ------------------------------------------------------------------ */
+/*  UPDATE                                                             */
+/* ------------------------------------------------------------------ */
 module.exports.updateOrder = async (event) => {
-  console.log('PUT /orders/{id} - Updating order:', event.pathParameters.id);
+  console.log('PUT /orders/:id');
 
   try {
-    const orderId = event.pathParameters.id;
-    const body = JSON.parse(event.body);
-    
-    // ✅ Extract userId from Cognito authorizer context
-    const authorizer = event.requestContext?.authorizer;
-    const userId = authorizer?.claims?.sub || authorizer?.principalId || event.requestContext?.authorizer?.userId;
-
+    const { userId } = extractUser(event);
     if (!userId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({
-          success: false,
-          error: 'Authentication required',
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
+      return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Authentication required' }), headers: HEADERS };
     }
 
-    if (!orders[orderId]) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          success: false,
-          error: 'Order not found'
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
+    const { id } = event.pathParameters || {};
+    const existing = await orders.getOrderById(id);
+
+    if (!existing) {
+      return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Order not found' }), headers: HEADERS };
     }
 
-    const updatedOrder = {
-      ...orders[orderId],
-      ...body,
-      id: orderId,
-      userId: orders[orderId].userId,
-      updatedAt: new Date().toISOString()
-    };
+    const body = JSON.parse(event.body || '{}');
+    const allowedFields = ['status', 'items', 'totalPrice', 'customerName', 'customerEmail'];
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) updateData[field] = body[field];
+    }
 
-    orders[orderId] = updatedOrder;
+    if (Object.keys(updateData).length === 0) {
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: 'No valid fields to update' }), headers: HEADERS };
+    }
+
+    const updated = await orders.updateOrder(id, updateData);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        data: updatedOrder
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      body: JSON.stringify({ success: true, data: updated }),
+      headers: HEADERS,
     };
   } catch (error) {
     console.error('Error updating order:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: 'Failed to update order'
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: error.message }), headers: HEADERS };
   }
 };
 
+/* ------------------------------------------------------------------ */
+/*  DELETE                                                             */
+/* ------------------------------------------------------------------ */
 module.exports.deleteOrder = async (event) => {
-  console.log('DELETE /orders/{id} - Deleting order:', event.pathParameters.id);
+  console.log('DELETE /orders/:id');
 
   try {
-    // ✅ Extract userId from Cognito authorizer context
-    const authorizer = event.requestContext?.authorizer;
-    const userId = authorizer?.claims?.sub || authorizer?.principalId || event.requestContext?.authorizer?.userId;
-
+    const { userId } = extractUser(event);
     if (!userId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({
-          success: false,
-          error: 'Authentication required',
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
-    }
-    const orderId = event.pathParameters.id;
-
-    if (!orders[orderId]) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          success: false,
-          error: 'Order not found'
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
+      return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Authentication required' }), headers: HEADERS };
     }
 
-    delete orders[orderId];
+    const { id } = event.pathParameters || {};
+    const existing = await orders.getOrderById(id);
+
+    if (!existing) {
+      return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Order not found' }), headers: HEADERS };
+    }
+
+    await orders.deleteOrder(id);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        message: 'Order deleted successfully'
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      body: JSON.stringify({ success: true, message: 'Order deleted successfully' }),
+      headers: HEADERS,
     };
   } catch (error) {
     console.error('Error deleting order:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: 'Failed to delete order'
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: error.message }), headers: HEADERS };
   }
 };

@@ -16,7 +16,10 @@ provider:
   environment:
     NODE_ENV: ${opt:stage, 'dev'}
     USERS_TABLE: ${self:service}-users-${self:provider.stage}
-    RESERVATIONS_TABLE: ${self:service}-reservations-${self:provider.stage}    MENU_TABLE: ${self:service}-menu-${self:provider.stage}    # ✅ Cognito Configuration (used by JWT authorizer, not by Lambda auth handlers)
+    RESERVATIONS_TABLE: ${self:service}-reservations-${self:provider.stage}
+    MENU_TABLE: ${self:service}-menu-${self:provider.stage}
+    ORDERS_TABLE: ${self:service}-orders-${self:provider.stage}
+    # ✅ Cognito Configuration (used by JWT authorizer, not by Lambda auth handlers)
     COGNITO_USER_POOL_ID: us-east-1_u2c4NVWFd
     COGNITO_CLIENT_ID: 4um4b8gu22hak09cg67d457i32
     COGNITO_REGION: us-east-1
@@ -58,6 +61,8 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.RESERVATIONS_TABLE}/index/*"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MENU_TABLE}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MENU_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ORDERS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ORDERS_TABLE}/index/*"
 
 functions:
   # ✅ Auth is now handled directly by AWS Amplify on the frontend.
@@ -260,6 +265,32 @@ resources:
           - IndexName: categoryIndex
             KeySchema:
               - AttributeName: category
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.ORDERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: orderId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: orderId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: userIdIndex
+            KeySchema:
+              - AttributeName: userId
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
