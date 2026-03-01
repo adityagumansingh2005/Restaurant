@@ -3,17 +3,16 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-type Tab = 'login' | 'signup' | 'otp' | 'password';
+type Tab = 'login' | 'signup' | 'otp';
 
 interface StepIndicatorProps {
-  currentStep: 1 | 2 | 3;
+  currentStep: 1 | 2;
 }
 
 function StepIndicator({ currentStep }: StepIndicatorProps) {
   const steps = [
     { num: 1, label: 'Details' },
     { num: 2, label: 'Verify' },
-    { num: 3, label: 'Password' },
   ];
 
   return (
@@ -58,6 +57,8 @@ export default function AuthModal({
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupPasswordConfirm, setSignupPasswordConfirm] = useState('');
   const [signupError, setSignupError] = useState('');
   const [sendingOTP, setSendingOTP] = useState(false);
 
@@ -70,17 +71,11 @@ export default function AuthModal({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Password state
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [settingPassword, setSettingPassword] = useState(false);
-
   const clearAllForms = useCallback(() => {
     setLoginEmail(''); setLoginPassword(''); setLoginError('');
-    setSignupName(''); setSignupEmail(''); setSignupPhone(''); setSignupError('');
+    setSignupName(''); setSignupEmail(''); setSignupPhone('');
+    setSignupPassword(''); setSignupPasswordConfirm(''); setSignupError('');
     setOtpValues(['', '', '', '', '', '']); setOtpError('');
-    setPassword(''); setPasswordConfirm(''); setPasswordError('');
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
@@ -182,13 +177,25 @@ export default function AuthModal({
       setSignupError('Please enter a valid email');
       return;
     }
+    if (!signupPassword || !signupPasswordConfirm) {
+      setSignupError('Please fill in the password fields');
+      return;
+    }
+    if (signupPassword.length < 8) {
+      setSignupError('Password must be at least 8 characters');
+      return;
+    }
+    if (signupPassword !== signupPasswordConfirm) {
+      setSignupError('Passwords do not match');
+      return;
+    }
     setSendingOTP(true);
     try {
-      await auth.sendOTP(signupName, signupEmail, signupPhone);
+      await auth.signup(signupName, signupEmail, signupPhone, signupPassword);
       setActiveTab('otp');
       startTimer();
     } catch (error) {
-      setSignupError(error instanceof Error ? error.message : 'Failed to send OTP');
+      setSignupError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {
       setSendingOTP(false);
     }
@@ -204,11 +211,17 @@ export default function AuthModal({
     setVerifying(true);
     try {
       await auth.verifyOTP(otp);
-      setActiveTab('password');
+      // Amplify auto-logs-in after confirmation
+      handleClose();
+      document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' });
     } catch (error) {
-      setOtpError(error instanceof Error ? error.message : 'OTP verification failed');
-      // Shake OTP inputs
-      setOtpValues(['', '', '', '', '', '']);
+      if (error instanceof Error && error.message === 'AUTO_LOGIN_FAILED') {
+        // Account created but auto-login failed – go to login tab
+        setActiveTab('login');
+      } else {
+        setOtpError(error instanceof Error ? error.message : 'OTP verification failed');
+        setOtpValues(['', '', '', '', '', '']);
+      }
     } finally {
       setVerifying(false);
     }
@@ -224,36 +237,6 @@ export default function AuthModal({
         error instanceof Error ? error.message : 'Failed to resend OTP',
         'error'
       );
-    }
-  };
-
-  const handleSetPassword = async () => {
-    setPasswordError('');
-    if (!password || !passwordConfirm) {
-      setPasswordError('Please fill in all password fields');
-      return;
-    }
-    if (password.length < 8) {
-      setPasswordError('Password must be at least 8 characters');
-      return;
-    }
-    if (password !== passwordConfirm) {
-      setPasswordError('Passwords do not match');
-      return;
-    }
-    setSettingPassword(true);
-    try {
-      await auth.setPassword(password);
-      handleClose();
-      document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' });
-    } catch (error) {
-      if (error instanceof Error && error.message === 'AUTO_LOGIN_FAILED') {
-        setActiveTab('login');
-      } else {
-        setPasswordError(error instanceof Error ? error.message : 'Failed to set password');
-      }
-    } finally {
-      setSettingPassword(false);
     }
   };
 
@@ -319,9 +302,21 @@ export default function AuthModal({
               value={signupPhone}
               onChange={(e) => setSignupPhone(e.target.value)}
             />
+            <input
+              type="password"
+              placeholder="Password (min 8 characters)"
+              value={signupPassword}
+              onChange={(e) => setSignupPassword(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={signupPasswordConfirm}
+              onChange={(e) => setSignupPasswordConfirm(e.target.value)}
+            />
 
             <button className="btn" onClick={handleSendOTP} disabled={sendingOTP}>
-              {sendingOTP ? 'Sending...' : 'Send Verification Code'}
+              {sendingOTP ? 'Creating Account...' : 'Create Account & Verify Email'}
             </button>
 
             <p className="text-center">
@@ -383,42 +378,6 @@ export default function AuthModal({
               <span className="otp-divider">|</span>
               <button onClick={() => setActiveTab('signup')}>Change Email</button>
             </div>
-          </div>
-        )}
-
-        {/* Password Tab */}
-        {activeTab === 'password' && (
-          <div className="auth-tab">
-            <h2>Set Your Password</h2>
-            <StepIndicator currentStep={3} />
-            {passwordError && <div className="error-msg">{passwordError}</div>}
-
-            <div className="otp-info">
-              <div className="otp-icon">&#128274;</div>
-              <p>Create a secure password for your account</p>
-            </div>
-
-            <input
-              type="password"
-              placeholder="Password (min 8 characters)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSetPassword()}
-            />
-
-            <button className="btn" onClick={handleSetPassword} disabled={settingPassword}>
-              {settingPassword ? 'Setting up...' : 'Complete Setup'}
-            </button>
-
-            <p className="text-center" style={{ marginTop: 15, fontSize: 12, color: '#999' }}>
-              <button onClick={() => setActiveTab('login')}>Back to Login</button>
-            </p>
           </div>
         )}
       </div>

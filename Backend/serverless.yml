@@ -17,12 +17,9 @@ provider:
     NODE_ENV: ${opt:stage, 'dev'}
     USERS_TABLE: ${self:service}-users-${self:provider.stage}
     RESERVATIONS_TABLE: ${self:service}-reservations-${self:provider.stage}
-    OTP_TABLE: restaurant-otp-codes-${self:provider.stage}
-    SES_SENDER_EMAIL: noreply@restaurantdeliciousbites.com
-    # ✅ Cognito Configuration (using existing user pool)
+    # ✅ Cognito Configuration (used by JWT authorizer, not by Lambda auth handlers)
     COGNITO_USER_POOL_ID: us-east-1_u2c4NVWFd
     COGNITO_CLIENT_ID: 4um4b8gu22hak09cg67d457i32
-    COGNITO_CLIENT_SECRET: f9hnoalrn0frjqpm8cgd5d02kg3p9vplanr9nle0umk9kt1k7to
     COGNITO_REGION: us-east-1
   httpApi:
     cors:
@@ -43,7 +40,8 @@ provider:
         identitySource: $request.header.Authorization
         issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_u2c4NVWFd
         audience:
-          - 4um4b8gu22hak09cg67d457i32
+          - 4um4b8gu22hak09cg67d457i32 # Old valid client (keep just in case)
+          - 5fhkbffpsrjmi930udh68jtpg8 # New Amplify SPA client
   iam:
     role:
       statements:
@@ -59,97 +57,12 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}/index/*"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.RESERVATIONS_TABLE}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.RESERVATIONS_TABLE}/index/*"
-            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.OTP_TABLE}"
-        # ✅ SES Permissions (for OTP emails)
-        - Effect: Allow
-          Action:
-            - ses:SendEmail
-            - ses:SendRawEmail
-          Resource: "*"
-        # ✅ Cognito Permissions
-        - Effect: Allow
-          Action:
-            - cognito-idp:SignUp
-            - cognito-idp:AdminInitiateAuth
-            - cognito-idp:AdminGetUser
-            - cognito-idp:AdminConfirmSignUp
-            - cognito-idp:AdminSetUserPassword
-            - cognito-idp:AdminDeleteUser
-            - cognito-idp:InitiateAuth
-            - cognito-idp:RespondToAuthChallenge
-            - cognito-idp:ChangePassword
-            - cognito-idp:GetUser
-          Resource: "arn:aws:cognito-idp:${self:provider.region}:*:userpool/*"
 
 functions:
-  # Authentication endpoints
-  signup:
-    handler: src/handlers/auth.signup
-    events:
-      - httpApi:
-          path: /auth/signup
-          method: post
-
-  login:
-    handler: src/handlers/auth.login
-    events:
-      - httpApi:
-          path: /auth/login
-          method: post
-
-  # ✅ Cognito token refresh endpoint
-  refresh:
-    handler: src/handlers/auth.refresh
-    events:
-      - httpApi:
-          path: /auth/refresh
-          method: post
-
-  # ✅ Get authenticated user info
-  getUser:
-    handler: src/handlers/auth.getUser
-    events:
-      - httpApi:
-          path: /auth/user
-          method: get
-          authorizer: cognitoAuthorizer
-
-  # ✅ Logout endpoint
-  logout:
-    handler: src/handlers/auth.logout
-    events:
-      - httpApi:
-          path: /auth/logout
-          method: post
-
-  # ✅ OTP endpoints
-  sendOTP:
-    handler: src/handlers/auth.sendOTP
-    events:
-      - httpApi:
-          path: /auth/send-otp
-          method: post
-
-  verifyOTP:
-    handler: src/handlers/auth.verifyOTP
-    events:
-      - httpApi:
-          path: /auth/verify-otp
-          method: post
-
-  resendOTP:
-    handler: src/handlers/auth.resendOTP
-    events:
-      - httpApi:
-          path: /auth/resend-otp
-          method: post
-
-  setPassword:
-    handler: src/handlers/auth.setPassword
-    events:
-      - httpApi:
-          path: /auth/set-password
-          method: post
+  # ✅ Auth is now handled directly by AWS Amplify on the frontend.
+  # All auth Lambda functions (signup, login, refresh, getUser, logout,
+  # sendOTP, verifyOTP, resendOTP, setPassword) have been removed.
+  # The Cognito JWT authorizer is still used to protect API endpoints.
 
   # Menu endpoints
   getMenu:
@@ -298,22 +211,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
-    OTPTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.OTP_TABLE}
-        AttributeDefinitions:
-          - AttributeName: email
-            AttributeType: S
-        KeySchema:
-          - AttributeName: email
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
-        TimeToLiveSpecification:
-          AttributeName: ttl
-          Enabled: true
+    # OTPTable removed — Cognito handles verification codes natively via Amplify.
 
   # ✅ Outputs (using existing Cognito User Pool)
   Outputs:
