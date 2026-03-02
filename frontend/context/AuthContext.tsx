@@ -26,6 +26,7 @@ interface AuthContextType {
   accessToken: string | null;
   currentUser: UserData | null;
   isLoggedIn: boolean;
+  authLoading: boolean;
   signupEmail: string | null;
   setSignupEmail: (email: string | null) => void;
   login: (email: string, password: string) => Promise<void>;
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [signupEmail, setSignupEmail] = useState<string | null>(null);
   const [signupPassword, setSignupPassword] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [notifications, setNotifications] = useState<{ id: number; message: string; type: string }[]>([]);
   const notifIdRef = useRef(0);
 
@@ -80,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // On mount: check if user is already signed in (Amplify stores tokens in localStorage)
   useEffect(() => {
-    loadUserSession();
+    loadUserSession().finally(() => setAuthLoading(false));
   }, [loadUserSession]);
 
   const showNotification = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -202,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     accessToken,
     currentUser,
     isLoggedIn: !!accessToken && !!currentUser,
+    authLoading,
     signupEmail,
     setSignupEmail,
     login,

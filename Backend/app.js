@@ -25,6 +25,7 @@ app.use((req, res, next) => {
 const authHandler = require('./src/handlers/auth');
 const menuHandler = require('./src/handlers/menu');
 const ordersHandler = require('./src/handlers/orders');
+const checkoutHandler = require('./src/handlers/checkout');
 const healthHandler = require('./src/handlers/health');
 const reservationsHandler = require('./src/handlers/reservations');
 
@@ -121,8 +122,8 @@ app.delete('/menu/:id', lambdaHandler(menuHandler.deleteMenuItem, true));
 // Orders Routes (Auth Required for POST, PUT, DELETE)
 // ============================================================
 app.post('/orders', lambdaHandler(ordersHandler.createOrder, true));
-app.get('/orders', lambdaHandler(ordersHandler.getOrders, false));
-app.get('/orders/:id', lambdaHandler(ordersHandler.getOrder, false));
+app.get('/orders', lambdaHandler(ordersHandler.getOrders, true));
+app.get('/orders/:id', lambdaHandler(ordersHandler.getOrder, true));
 app.put('/orders/:id', lambdaHandler(ordersHandler.updateOrder, true));
 app.delete('/orders/:id', lambdaHandler(ordersHandler.deleteOrder, true));
 
@@ -134,6 +135,12 @@ app.get('/reservations', lambdaHandler(reservationsHandler.getReservations, true
 app.get('/reservations/:id', lambdaHandler(reservationsHandler.getReservation, true));
 app.put('/reservations/:id', lambdaHandler(reservationsHandler.updateReservation, true));
 app.delete('/reservations/:id', lambdaHandler(reservationsHandler.deleteReservation, true));
+
+// ============================================================
+// Checkout Routes (Stripe)
+// ============================================================
+app.post('/checkout/session', lambdaHandler(checkoutHandler.createCheckoutSession, true));
+app.post('/checkout/confirm', lambdaHandler(checkoutHandler.confirmPayment, true));
 
 // 404 Handler
 app.use((req, res) => {

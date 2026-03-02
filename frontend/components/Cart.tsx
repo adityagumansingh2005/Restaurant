@@ -51,7 +51,7 @@ export default function Cart({ onOpenAuth }: { onOpenAuth: () => void }) {
         totalPrice,
       };
 
-      const res = await authenticatedFetch('/orders', {
+      const res = await authenticatedFetch('/checkout/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload),
@@ -59,16 +59,15 @@ export default function Cart({ onOpenAuth }: { onOpenAuth: () => void }) {
 
       const data = await res.json().catch(() => null);
 
-      if (res.ok && data?.success) {
-        setOrderSuccess(data.data);
-        clearCart();
-        showNotification('Order placed successfully! 🎉', 'success');
+      if (res.ok && data?.success && data?.url) {
+        // Redirect to Stripe Checkout page
+        window.location.href = data.url;
       } else {
-        showNotification(data?.error || 'Failed to place order', 'error');
+        showNotification(data?.error || 'Failed to initialize checkout', 'error');
+        setIsOrdering(false);
       }
     } catch {
       showNotification('Network error – please try again', 'error');
-    } finally {
       setIsOrdering(false);
     }
   };
