@@ -21,6 +21,13 @@ const server = app.listen(PORT, () => {
   console.log(`   GET    http://localhost:${PORT}/orders/:id`);
   console.log(`   PUT    http://localhost:${PORT}/orders/:id`);
   console.log(`   DELETE http://localhost:${PORT}/orders/:id`);
+  console.log(`\n   🔒 Admin Endpoints:`);
+  console.log(`   GET    http://localhost:${PORT}/admin/check`);
+  console.log(`   GET    http://localhost:${PORT}/admin/dashboard`);
+  console.log(`   GET    http://localhost:${PORT}/admin/reservations`);
+  console.log(`   GET    http://localhost:${PORT}/admin/orders`);
+  console.log(`   GET    http://localhost:${PORT}/admin/reviews`);
+  console.log(`   GET    http://localhost:${PORT}/admin/menu`);
   console.log(`\n═══════════════════════════════════════════════════════════\n`);
 });
 

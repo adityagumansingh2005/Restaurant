@@ -104,9 +104,46 @@ const deleteReview = async (reviewId) => {
   }
 };
 
+/**
+ * Update a review (e.g. change status)
+ */
+const updateReview = async (reviewId, updateData) => {
+  try {
+    const timestamp = new Date().toISOString();
+    const expressionAttributeNames = {};
+    const expressionAttributeValues = {};
+
+    const setClauses = Object.keys(updateData).map((k) => {
+      expressionAttributeNames[`#${k}`] = k;
+      expressionAttributeValues[`:${k}`] = updateData[k];
+      return `#${k} = :${k}`;
+    });
+
+    expressionAttributeNames['#updatedAt'] = 'updatedAt';
+    expressionAttributeValues[':updatedAt'] = timestamp;
+    setClauses.push('#updatedAt = :updatedAt');
+
+    const result = await dynamodb
+      .update({
+        TableName: REVIEWS_TABLE,
+        Key: { reviewId },
+        UpdateExpression: `SET ${setClauses.join(', ')}`,
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
+        ReturnValues: 'ALL_NEW',
+      })
+      .promise();
+
+    return result.Attributes || null;
+  } catch (error) {
+    throw new Error(`Error updating review: ${error.message}`);
+  }
+};
+
 module.exports = {
   createReview,
   getReviewById,
   getPublishedReviews,
+  updateReview,
   deleteReview,
 };

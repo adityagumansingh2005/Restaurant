@@ -1,4 +1,4 @@
-/* Font is loaded via next/font in layout.tsx for optimal performance */
+﻿/* Font is loaded via next/font in layout.tsx for optimal performance */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1524,4 +1524,330 @@ footer details div {
   margin-top: 50px;
   color: #666;
   font-size: 18px;
+}
+
+/* ================================================================== */
+/*  MY ORDERS PAGE                                                    */
+/* ================================================================== */
+
+.orders-filter-bar {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 24px 0 32px;
+  flex-wrap: wrap;
+}
+
+.orders-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border: 2px solid #e0e0e0;
+  border-radius: 30px;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.orders-filter-btn:hover {
+  border-color: #e63946;
+  color: #e63946;
+}
+
+.orders-filter-btn.active {
+  background: #e63946;
+  border-color: #e63946;
+  color: white;
+}
+
+.orders-filter-count {
+  background: rgba(0,0,0,0.12);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.orders-filter-btn.active .orders-filter-count {
+  background: rgba(255,255,255,0.25);
+}
+
+.orders-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 0;
+  color: #888;
+  font-size: 15px;
+}
+
+.orders-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #e63946;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.order-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.order-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  cursor: pointer;
+  user-select: none;
+  gap: 12px;
+}
+
+.order-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.order-card-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+  background: #fff5f5;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-card-id {
+  font-size: 15px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 3px;
+}
+
+.order-card-id span {
+  color: #e63946;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+.order-card-date {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}
+
+.order-card-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.order-status-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.order-card-total {
+  font-size: 17px;
+  font-weight: 800;
+  color: #222;
+  white-space: nowrap;
+}
+
+.order-card-chevron {
+  font-size: 11px;
+  color: #bbb;
+  transition: transform 0.2s;
+}
+
+.order-card-body {
+  border-top: 1px solid #f0f0f0;
+  padding: 20px 22px;
+  animation: slideDown 0.25s ease;
+}
+
+/* Items table */
+.order-items-table {
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.order-items-table-head {
+  display: grid;
+  grid-template-columns: 1fr 60px 80px;
+  padding: 10px 14px;
+  background: #fafafa;
+  font-weight: 700;
+  color: #888;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.order-items-table-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 80px;
+  padding: 10px 14px;
+  border-top: 1px solid #f5f5f5;
+  color: #444;
+}
+
+.order-items-table-row span:nth-child(2),
+.order-items-table-head span:nth-child(2) {
+  text-align: center;
+}
+
+.order-items-table-row span:nth-child(3),
+.order-items-table-head span:nth-child(3) {
+  text-align: right;
+}
+
+.order-items-table-total {
+  display: grid;
+  grid-template-columns: 1fr 60px 80px;
+  padding: 12px 14px;
+  border-top: 2px solid #f0f0f0;
+  font-weight: 800;
+  color: #e63946;
+  font-size: 15px;
+}
+
+.order-items-table-total span:last-child {
+  text-align: right;
+}
+
+/* Status timeline */
+.order-timeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.order-timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  gap: 6px;
+}
+
+.order-timeline-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  border: 2px solid #ccc;
+  z-index: 1;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.order-timeline-step.done .order-timeline-dot {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76,175,80,0.2);
+}
+
+.order-timeline-line {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: #e0e0e0;
+  z-index: 0;
+}
+
+.order-timeline-step.done .order-timeline-line {
+  background: #4CAF50;
+}
+
+.order-timeline-step span {
+  font-size: 11px;
+  color: #aaa;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.order-timeline-step.done span {
+  color: #4CAF50;
+  font-weight: 700;
+}
+
+.order-cancel-btn {
+  background: none;
+  border: 1px solid #f44336;
+  color: #f44336;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.order-cancel-btn:hover {
+  background: #f44336;
+  color: white;
+}
+
+@media (max-width: 600px) {
+  .order-card-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .order-card-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .order-items-table-head,
+  .order-items-table-row,
+  .order-items-table-total {
+    grid-template-columns: 1fr 50px 70px;
+    font-size: 13px;
+  }
 }

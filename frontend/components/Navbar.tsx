@@ -80,6 +80,9 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth: () => void }) {
                     <div className="auth-dropdown-item">
                       <Link href="/my-reservations" onClick={() => setDropdownOpen(false)}>My Reservations</Link>
                     </div>
+                    <div className="auth-dropdown-item">
+                      <Link href="/my-orders" onClick={() => setDropdownOpen(false)}>My Orders</Link>
+                    </div>
                     <div className="auth-dropdown-item logout-item">
                       <a
                         href="#"
