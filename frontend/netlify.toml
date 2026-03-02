@@ -4,6 +4,8 @@
 
 [build.environment]
   NEXT_PUBLIC_API_URL = "https://kmxjx8sunf.execute-api.us-east-1.amazonaws.com"
+  NEXT_PUBLIC_COGNITO_USER_POOL_ID = "us-east-1_u2c4NVWFd"
+  NEXT_PUBLIC_COGNITO_CLIENT_ID = "5fhkbffpsrjmi930udh68jtpg8"
   NODE_VERSION = "20"
 
 [[plugins]]
