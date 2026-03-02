@@ -20,6 +20,8 @@ provider:
     MENU_TABLE: ${self:service}-menu-${self:provider.stage}
     ORDERS_TABLE: ${self:service}-orders-${self:provider.stage}
     REVIEWS_TABLE: ${self:service}-reviews-${self:provider.stage}
+    STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY, 'sk_test_mock_key'}
+    FRONTEND_URL: https://deliciousbitesrestrocafe.netlify.app
     # ✅ Cognito Configuration (used by JWT authorizer, not by Lambda auth handlers)
     COGNITO_USER_POOL_ID: us-east-1_u2c4NVWFd
     COGNITO_CLIENT_ID: 4um4b8gu22hak09cg67d457i32
@@ -215,6 +217,23 @@ functions:
       - httpApi:
           path: /reservations/{id}
           method: delete
+          authorizer: cognitoAuthorizer
+
+  # Checkout / Stripe endpoints
+  createCheckoutSession:
+    handler: src/handlers/checkout.createCheckoutSession
+    events:
+      - httpApi:
+          path: /checkout/session
+          method: post
+          authorizer: cognitoAuthorizer
+
+  confirmPayment:
+    handler: src/handlers/checkout.confirmPayment
+    events:
+      - httpApi:
+          path: /checkout/confirm
+          method: post
           authorizer: cognitoAuthorizer
 
 plugins:
