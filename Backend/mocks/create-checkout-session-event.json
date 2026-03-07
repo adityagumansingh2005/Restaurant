@@ -1,0 +1,20 @@
+{
+  "httpMethod": "POST",
+  "path": "/checkout/session",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "requestContext": {
+    "authorizer": {
+      "jwt": {
+        "claims": {
+          "sub": "test-user-123",
+          "email": "customer@example.com"
+        }
+      }
+    }
+  },
+  "body": "{\"items\":[{\"name\":\"Grilled Salmon\",\"price\":24.99,\"quantity\":2},{\"name\":\"Caesar Salad\",\"price\":12.99,\"quantity\":1}]}"
+}

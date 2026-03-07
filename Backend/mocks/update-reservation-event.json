@@ -1,0 +1,22 @@
+{
+  "httpMethod": "PUT",
+  "path": "/reservations/res-001",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": {
+    "id": "res-001"
+  },
+  "requestContext": {
+    "authorizer": {
+      "jwt": {
+        "claims": {
+          "sub": "test-user-123",
+          "email": "customer@example.com"
+        }
+      }
+    }
+  },
+  "body": "{\"name\":\"John Doe\",\"dateTime\":\"2026-03-20T20:00:00Z\",\"partySize\":6,\"phone\":\"+1234567890\"}"
+}

@@ -1,0 +1,22 @@
+{
+  "httpMethod": "PUT",
+  "path": "/orders/order-001",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": {
+    "id": "order-001"
+  },
+  "requestContext": {
+    "authorizer": {
+      "jwt": {
+        "claims": {
+          "sub": "test-user-123",
+          "email": "customer@example.com"
+        }
+      }
+    }
+  },
+  "body": "{\"status\":\"delivered\"}"
+}

@@ -1,0 +1,10 @@
+{
+  "httpMethod": "POST",
+  "path": "/reviews",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "body": "{\"name\":\"John Doe\",\"rating\":5,\"text\":\"Amazing food and great atmosphere! The grilled salmon was cooked to perfection.\"}"
+}

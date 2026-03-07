@@ -1,0 +1,22 @@
+{
+  "httpMethod": "DELETE",
+  "path": "/menu/menu-001",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": {
+    "id": "menu-001"
+  },
+  "requestContext": {
+    "authorizer": {
+      "jwt": {
+        "claims": {
+          "sub": "test-user-123",
+          "email": "admin@restaurant.com"
+        }
+      }
+    }
+  },
+  "body": null
+}

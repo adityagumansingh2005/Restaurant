@@ -1,0 +1,12 @@
+{
+  "httpMethod": "GET",
+  "path": "/menu",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": {
+    "category": "Main Course"
+  },
+  "pathParameters": null,
+  "body": null
+}

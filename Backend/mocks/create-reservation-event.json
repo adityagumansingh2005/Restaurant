@@ -1,0 +1,20 @@
+{
+  "httpMethod": "POST",
+  "path": "/reservations",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "requestContext": {
+    "authorizer": {
+      "jwt": {
+        "claims": {
+          "sub": "test-user-123",
+          "email": "customer@example.com"
+        }
+      }
+    }
+  },
+  "body": "{\"name\":\"John Doe\",\"dateTime\":\"2026-03-15T19:00:00Z\",\"partySize\":4,\"phone\":\"+1234567890\"}"
+}

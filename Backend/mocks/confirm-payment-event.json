@@ -1,0 +1,20 @@
+{
+  "httpMethod": "POST",
+  "path": "/checkout/confirm",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "requestContext": {
+    "authorizer": {
+      "jwt": {
+        "claims": {
+          "sub": "test-user-123",
+          "email": "customer@example.com"
+        }
+      }
+    }
+  },
+  "body": "{\"orderId\":\"order-001\"}"
+}

@@ -1,0 +1,20 @@
+{
+  "httpMethod": "POST",
+  "path": "/menu",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "requestContext": {
+    "authorizer": {
+      "jwt": {
+        "claims": {
+          "sub": "test-user-123",
+          "email": "admin@restaurant.com"
+        }
+      }
+    }
+  },
+  "body": "{\"name\":\"Grilled Salmon\",\"price\":24.99,\"category\":\"Main Course\",\"description\":\"Fresh Atlantic salmon grilled to perfection with herbs\",\"image\":\"https://example.com/salmon.jpg\",\"available\":true}"
+}
