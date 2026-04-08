@@ -60,7 +60,6 @@ module.exports.syncCurrentUser = async (event) => {
     const claims = getClaims(event);
 
     const userId =
-      body.identityId ||
       claims.sub ||
       event.requestContext?.authorizer?.userId ||
       event.requestContext?.authorizer?.principalId ||
@@ -124,7 +123,6 @@ module.exports.syncCurrentUser = async (event) => {
         Key: { email },
         UpdateExpression: [
           'SET userId = :userId',
-          'identityId = :identityId',
           'email = :email',
           'firstName = :firstName',
           'lastName = :lastName',
@@ -139,7 +137,6 @@ module.exports.syncCurrentUser = async (event) => {
         },
         ExpressionAttributeValues: {
           ':userId': userId,
-          ':identityId': body.identityId || null,
           ':email': email,
           ':firstName': firstName,
           ':lastName': lastName,
