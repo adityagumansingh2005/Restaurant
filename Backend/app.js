@@ -28,6 +28,7 @@ const ordersHandler = require('./src/handlers/orders');
 const checkoutHandler = require('./src/handlers/checkout');
 const healthHandler = require('./src/handlers/health');
 const reservationsHandler = require('./src/handlers/reservations');
+const usersHandler = require('./src/handlers/users');
 
 // Convert Lambda handlers to Express routes
 const lambdaHandler = (handler, requireAuth = false) => {
@@ -141,6 +142,11 @@ app.delete('/reservations/:id', lambdaHandler(reservationsHandler.deleteReservat
 // ============================================================
 app.post('/checkout/session', lambdaHandler(checkoutHandler.createCheckoutSession, true));
 app.post('/checkout/confirm', lambdaHandler(checkoutHandler.confirmPayment, true));
+
+// ============================================================
+// User Profile Sync Route (Auth Required)
+// ============================================================
+app.post('/users/sync', lambdaHandler(usersHandler.syncCurrentUser, true));
 
 // 404 Handler
 app.use((req, res) => {

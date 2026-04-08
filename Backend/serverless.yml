@@ -236,6 +236,15 @@ functions:
           method: post
           authorizer: cognitoAuthorizer
 
+  # User profile sync endpoint
+  syncCurrentUser:
+    handler: src/handlers/users.syncCurrentUser
+    events:
+      - httpApi:
+          path: /users/sync
+          method: post
+          authorizer: cognitoAuthorizer
+
 plugins:
   - serverless-offline
 

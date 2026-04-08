@@ -3,9 +3,15 @@ AWS.config.update({ region: 'us-east-1' });
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
+const email = process.argv[2];
+if (!email) {
+  console.log('Usage: node check-user.js <email>');
+  process.exit(1);
+}
+
 const params = {
   TableName: 'restaurant-api-users-dev',
-  Key: { userId: 'd4082418-90f1-7098-417d-6c2aec5fec9d' }
+  Key: { email }
 };
 
 console.log('📊 Querying DynamoDB for user...\n');
